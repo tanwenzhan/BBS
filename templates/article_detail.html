@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block page-content %}
+
+    <div class="col-md-8">
+        <h1>{{ article_obj.title }}</h1>
+        <p>{{ article_obj.articledetail.content|safe }}</p>
+        <div class="clearfix">
+            <div id="div_digg">
+                <div class="diggit digg-down">
+                    <span class="diggnum" id="digg_count">{{ article_obj.up_count }}</span>
+                </div>
+                <div class="buryit digg-down">
+                    <span class="burynum" id="bury_count">{{ article_obj.down_count }}</span>
+                </div>
+                <div class="clear"></div>
+                <div class="diggword" id="digg_tips" style="color: red;"></div>
+                <div id="t1" article_id='{{ article_obj.pk }}' user-username="{{ request.user.username }}"></div>
+            </div>
+        </div>
+        <div class="clearfix">
+            {% if request.user == article_obj.user %}
+             <span class="pull-right"style="margin-right: 40px;font-size: 20px"><a href="/edit/article/{{ article_obj.pk }}/">编辑</a></span>
+             <span class="pull-right"style="margin-right: 40px;font-size: 20px"><a href="/delete/article/{{ article_obj.pk }}/">删除</a></span>
+            {% endif %}
+        </div>
+        <span>评论树</span>
+        <ul class="list-group comment-tree">
+
+
+        </ul>
+
+        <span>评论列表</span>
+        <div>
+            <ul class="list-group list-new-group">
+                {% for comment in comment_list %}
+                    <li class="list-group-item">
+                        <div>
+                            <span><a href="">#第{{ forloop.counter }}楼</a></span>&nbsp;&nbsp;
+                            {{ comment.create_time|date:'Y-m-d H:i' }}&nbsp;&nbsp;{{ comment.user.username }}
+                            <a class="reply-back pull-right" username="{{ comment.user.username }} "
+                               pid={{ comment.nid }}><span>回复</span></a>
+                        </div>
+
+                        {% if comment.parent_comment_id %}
+                            <div class="parsent-content well">
+                                <span>{{ comment.parent_comment.user.username }}</span>&nbsp;&nbsp;
+                                <span>{{ comment.parent_comment.content }}</span>
+                            </div>
+                        {% endif %}
+
+                        <div class="comment-content">
+                            {{ comment.content }}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <p>
+            昵称：<input type="text" id="tbCommentAuthor" class="author" disabled="disabled" size="50"
+                      value="{{ request.user.username }}">
+        </p>
+        <div>
+            <textarea name="" id="comment" cols="60" rows="10"></textarea>
+            <div>
+                <button id="comment_button">提交</button>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/article_detail.js"></script>
+
+    <script>
+        $.ajax({
+            url: '/blog/comment/tree/' + '{{ article_obj.pk }}/',
+            type: 'GET',
+            success: function (data) {
+                console.log(data)
+                $.each(data, function (index, all_dict) {
+                    var content = all_dict.content;
+                    var pid = all_dict.parent_comment_id;
+                    var my_id = all_dict.nid;
+                    var s = '<div class="list-item list_li" comment-id=' + my_id + '><span>' + content + '</span></div>'
+                    if (pid) {
+                        $('[comment-id=' + pid + ']').append(s)
+                    } else {
+                        $('.comment-tree').append(s)
+                    }
+                })
+
+
+            }
+        })
+
+        pid = "";
+        $('#comment_button').click(function () {
+
+            //console.log($('#comment').val());
+            var content = $('#comment').val();
+            article_id = $('#t1').attr('article_id')
+            if (pid) {
+                var index = content.indexOf('\n')
+                content = content.slice(index + 1)
+                //console.log(index,content)
+            }
+
+            $.ajax({
+                url: '/blog/comment/' + article_id + '/',
+                type: 'POST',
+                data: {comment_content: content, pid: pid},
+                success: function (data) {
+                    var create_time = data.create_time
+                    var content = data.content
+                    var username = data.username
+
+                    var r = '<li class="list-group-item"><div>' + create_time + '&nbsp;&nbsp;' + username + '<a  class="reply-back pull-right" username=' + username + '><span>回复</span></a></div><div class="comment-content">' + content + '</div></li>'
+                    $('.list-new-group').append(r)
+                    //清空输入框的文字
+                    $('#comment').val("")
+                    pid = ""
+                }
+
+            })
+        })
+        $('.reply-back').click(function () {
+            $('#comment').focus()
+            username = $(this).attr('username')
+            pid = $(this).attr('pid')
+            var val = '@' + username + '\n'
+            $('#comment').val(val)
+
+
+        })
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {#    <script>#}
+    {#        $('.digg-down').on('click',function () {#}
+    {#            var $now =$(this);#}
+    {#            is_up = $now.hasClass('diggit');#}
+    {#            article_id = '{{ article_obj.pk }}'#}
+    {#            $.ajax({#}
+    {#                url:'/blog/up_down/',#}
+    {#                type:'POST',#}
+    {#                data:{is_up:is_up,article_id:article_id},#}
+    {#                success:function (data) {#}
+    {#                    console.log(data)#}
+    {#                    if (data.status){#}
+    {#                        if (data.fisrt_action) {#}
+    {#                            $('#digg_tips').text('你已经推荐过了')#}
+    {#                        }#}
+    {#                        else {#}
+    {#                            $('#digg_tips').text('你已经踩过了')#}
+    {#                        }#}
+    {#                       // setTimeout(function () {#}
+    {#                       //     $('#digg_tips').text('')#}
+    {#                       // },1000)#}
+    {#                    }#}
+    {#                    else {#}
+    {#                        var val = $now.children().first().text()#}
+    {#                        $now.children().first().text(parseInt(val)+1)#}
+    {#                    }#}
+    {#                }#}
+    {##}
+    {#            })#}
+    {##}
+    {#        })#}
+    {#    </script>#}
+{% endblock %}

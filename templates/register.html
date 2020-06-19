@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="x-ua-compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Title</title>
+    <link rel="stylesheet" href="/static/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/fontAwesome/css/font-awesome.min.css">
+    <link rel="shortcut icon" href="/static/2.ico" type="image/x-icon"/>
+    <link rel="stylesheet" href="/static/mycss.css">
+{#    <style>#}
+{#        #avatar-img{#}
+{#            height: 80px;#}
+{#            width: 80px;#}
+{#        }#}
+{#    </style>#}
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <form action="/reg/" autocomplete="off" method="post" enctype="multipart/form-data" class="form-horizontal regform" novalidate>
+                {% csrf_token %}
+                <div class="form-group {% if forms_obj.username.errors.0 %}has-error{% endif %}">
+                    <label for="{{ forms_obj.username.id_for_label }}"
+                           class="col-sm-2 control-label">{{ forms_obj.username.label }}</label>
+                    <div class="col-sm-8">
+                        {{ forms_obj.username }}
+                        <span class="help-block">{{ forms_obj.username.errors.0 }}</span>
+                    </div>
+                </div>
+
+                <div class="form-group {% if forms_obj.password.errors.0 %}has-error{% endif %}">
+                    <label for="{{ forms_obj.password.id_for_label }}"
+                           class="col-sm-2 control-label">{{ forms_obj.password.label }}</label>
+                    <div class="col-sm-8">
+                        {{ forms_obj.password }}
+                        <span class="help-block">{{ forms_obj.password.errors.0 }}</span>
+                    </div>
+
+                </div>
+
+                <div class="form-group {% if forms_obj.re_password.errors.0 %}has-error{% endif %}">
+                    <label for="{{ forms_obj.re_password.id_for_label }}"
+                           class="col-sm-2 control-label">{{ forms_obj.re_password.label }}</label>
+                    <div class="col-sm-8">
+                        {{ forms_obj.re_password }}
+                        <span class="help-block">{{ forms_obj.re_password.errors.0 }}</span>
+                    </div>
+
+                </div>
+
+                <div class="form-group {% if forms_obj.email.errors.0 %}has-error{% endif %}">
+                    <label for="{{ forms_obj.email.id_for_label }}"
+                           class="col-sm-2 control-label">{{ forms_obj.email.label }}</label>
+                    <div class="col-sm-8">
+                        {{ forms_obj.email }}
+                        <span class="help-block">
+                            {{ forms_obj.email.errors.0 }}</span>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label
+                           class="col-sm-2 control-label" >头像</label>
+                    <div class="col-sm-8">
+                        <label for="id_avatar">
+                            <img id="avatar-img" src="/static/img/default.png" alt="">
+                        </label>
+                        <input accept="image/*" type="file" name="avatar" id="id_avatar" style="display: none">
+                        <span class="help-block"></span>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <button type="button" class="btn btn-success" id="reg-submit">注册</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="/static/jquery-3.4.1.min.js"></script>
+<script src="/static/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+<script src="/static/setupajax.js"></script>
+<script>
+    $('#id_avatar').change(function () {
+        //创建读取文件的对象
+        var fileReader = new FileReader();
+        //找到文件对象
+        {#var s= this.files[0]#}
+        //读取文件
+        fileReader.readAsDataURL(this.files[0]);
+        fileReader.onload=function(){
+            $("#avatar-img").attr("src",fileReader.result)
+        }
+
+    })
+
+    $('#reg-submit').click(function () {
+        var formData = new FormData()
+        {#var username = $('#id_username').val();#}
+        {#var password = $('#id_password').val();#}
+        {#var re_password = $('#id_re_password').val();#}
+        {#var email = $('#id_email').val();#}
+        formData.append("username",$('#id_username').val())
+        formData.append("password",$('#id_password').val())
+        formData.append("re_password",$('#id_re_password').val())
+        formData.append("email",$('#id_email').val())
+        formData.append("avatar",$('#id_avatar')[0].files[0])
+        $.ajax({
+            url:"/reg/",
+            type:"POST",
+            dataType:'json',
+            processData:false,
+            contentType:false,
+            data:formData,
+            success:function (data) {
+                if (data.status){
+                    $.each(data.msg,function (k,v) {
+                        {#console.log('id_'+k,v[0])#}
+                        $("#id_"+k).next('span').text(v[0]).parent().parent().addClass('has-error')
+                    })
+                    {#console.log(data.msg)#}
+                }else {
+                    location.href=data.msg
+                }
+            }
+        })
+    })
+    $('input').focus(function () {
+        $(this).next('span').text("").parent().parent().removeClass('has-error')
+    })
+    {#$("#id_username").blur(function () {#}
+    $("#id_username").on('input',function () {
+        var username = $(this).val()
+        $.ajax({
+            url: '/check_username_exits/',
+            type: 'GET',
+            data: {username:username},
+            success:function (data) {
+                if (data.status){
+                    $("#id_username").next('span').text(data.msg).parent().parent().addClass('has-error')
+                }else {
+                    $("#id_username").next('span').text('').parent().parent().removeClass('has-error')
+
+                }
+            }
+        })
+    })
+</script>
+</body>
+</html>
